@@ -1,78 +1,91 @@
-let display = document.getElementById("display");
-let currentInput = "";
-let firstNumber = "";
-let secondNumber = "";
-let operator = "";
-let shouldResetDisplay = false;
 
-function clearCalculator() {
-    currentInput = "";
-    firstNumber = "";
-    secondNumber = "";
-    operator = "";
-    shouldResetDisplay = false;
-    display.textContent = "0";
+
+/* script.js */
+const display = document.getElementById("display");
+let currentValue = "0";
+let firstOperand = null;
+let secondOperand = null;
+let operator = null;
+
+function updateDisplay() {
+    display.textContent = currentValue;
 }
 
-document.querySelector(".clear").addEventListener("click", clearCalculator);
-
-document.querySelectorAll(".number").forEach(button => {
+document.querySelectorAll(".btn.number").forEach(button => {
     button.addEventListener("click", () => {
-        if (shouldResetDisplay) {
-            display.textContent = "";
-            shouldResetDisplay = false;
-        }
-        if (display.textContent === "0") {
-            display.textContent = button.textContent;
+        if (currentValue === "0") {
+            currentValue = button.textContent;
         } else {
-            display.textContent += button.textContent;
+            currentValue += button.textContent;
         }
-        currentInput = display.textContent;
+        updateDisplay();
     });
 });
 
-document.querySelectorAll(".operator").forEach(button => {
+document.querySelector(".clear").addEventListener("click", () => {
+    currentValue = "0";
+    firstOperand = null;
+    secondOperand = null;
+    operator = null;
+    updateDisplay();
+});
+
+document.querySelector(".backspace").addEventListener("click", () => {
+    currentValue = currentValue.slice(0, -1) || "0";
+    updateDisplay();
+});
+
+document.querySelectorAll(".btn.operator").forEach(button => {
     button.addEventListener("click", () => {
-        if (firstNumber && operator) {
-            secondNumber = currentInput;
-            display.textContent = operate(operator, parseFloat(firstNumber), parseFloat(secondNumber));
-            firstNumber = display.textContent;
-        } else {
-            firstNumber = currentInput;
+        if (firstOperand === null) {
+            firstOperand = parseFloat(currentValue);
+        } else if (operator) {
+            secondOperand = parseFloat(currentValue);
+            currentValue = String(operate(operator, firstOperand, secondOperand));
+            firstOperand = parseFloat(currentValue);
         }
         operator = button.dataset.operator;
-        shouldResetDisplay = true;
+        currentValue = "0";
+        updateDisplay();
     });
 });
 
 document.querySelector(".equal").addEventListener("click", () => {
-    if (firstNumber && operator && currentInput) {
-        secondNumber = currentInput;
-        display.textContent = operate(operator, parseFloat(firstNumber), parseFloat(secondNumber));
-        firstNumber = display.textContent;
-        operator = "";
-        shouldResetDisplay = true;
+    if (operator && firstOperand !== null) {
+        secondOperand = parseFloat(currentValue);
+        currentValue = String(operate(operator, firstOperand, secondOperand));
+        firstOperand = null;
+        operator = null;
+        updateDisplay();
     }
 });
 
-document.querySelector(".backspace").addEventListener("click", () => {
-    display.textContent = display.textContent.slice(0, -1) || "0";
-    currentInput = display.textContent;
+document.querySelectorAll(".btn.function").forEach(button => {
+    button.addEventListener("click", () => {
+        let func = button.dataset.function;
+        let num = parseFloat(currentValue);
+        switch (func) {
+            case "sin": currentValue = String(Math.sin(num)); break;
+            case "cos": currentValue = String(Math.cos(num)); break;
+            case "tan": currentValue = String(Math.tan(num)); break;
+            case "sqrt": currentValue = String(Math.sqrt(num)); break;
+            case "log": currentValue = String(Math.log10(num)); break;
+            case "exp": currentValue = String(Math.exp(num)); break;
+            case "pi": currentValue = String(Math.PI); break;
+        }
+        updateDisplay();
+    });
 });
 
-document.querySelector(".decimal").addEventListener("click", () => {
-    if (!display.textContent.includes(".")) {
-        display.textContent += ".";
-        currentInput = display.textContent;
-    }
-});
-
-function operate(operator, a, b) {
-    switch (operator) {
-        case "+": return (a + b).toFixed(2);
-        case "-": return (a - b).toFixed(2);
-        case "*": return (a * b).toFixed(2);
-        case "/": return b === 0 ? "Error" : (a / b).toFixed(2);
-        default: return b;
+function operate(op, a, b) {
+    switch (op) {
+        case "+": return a + b;
+        case "-": return a - b;
+        case "*": return a * b;
+        case "/": return b !== 0 ? a / b : "Error";
+        case "%": return (a / 100) * b;
+        default: return "Error";
     }
 }
+
+updateDisplay();
